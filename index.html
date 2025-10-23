@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Lightbox z YouTube</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    /* Kwadratowy przycisk / miniatura */
+    .video-thumb {
+      width: 200px;
+      height: 200px;
+      background: url('https://raw.githubusercontent.com/W0jt3kk/eBOK-YT-lightbox/refs/heads/main/kotły.png') center/cover;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .video-thumb:hover {
+      transform: scale(1.05);
+    }
+
+    /* Tło lightboxa */
+    .lightbox {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    /* Wnętrze modala (player YouTube) */
+    .lightbox iframe {
+      width: 80%;
+      max-width: 800px;
+      aspect-ratio: 16 / 9;
+      border: none;
+      border-radius: 10px;
+    }
+
+    /* Przycisk zamknięcia */
+    .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 32px;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Miniatura -->
+  <div class="video-thumb" id="openVideo"></div>
+
+  <!-- Lightbox z playerem -->
+  <div class="lightbox" id="videoModal">
+    <div class="close-btn" id="closeVideo">&times;</div>
+    <iframe id="youtubeFrame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  </div>
+
+  <script>
+    const openBtn = document.getElementById('openVideo');
+    const modal = document.getElementById('videoModal');
+    const closeBtn = document.getElementById('closeVideo');
+    const frame = document.getElementById('youtubeFrame');
+
+    // ID filmu z YouTube (tu możesz podmienić)
+    const videoId = "ScMzIvxBSi4";
+
+    openBtn.addEventListener('click', () => {
+      modal.style.display = 'flex';
+      frame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+      frame.src = "";
+    });
+
+    // Zamknij po kliknięciu w tło
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        frame.src = "";
+      }
+    });
+  </script>
+
+</body>
+</html>
