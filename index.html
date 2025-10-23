@@ -184,6 +184,11 @@
     });
     // Scroll myszką wyłączony dla karuzeli – przewijanie tylko przyciskami i klikami w podglądy
 
+    // Obsługa zamykania lightboxa (X + klik w tło)
+    const closeBtn = document.getElementById('closeVideo');
+    const modal = document.getElementById('videoModal');
+    if (closeBtn) closeBtn.addEventListener('click', closeVideo);
+    if (modal) modal.addEventListener('click', (e)=>{ if(e.target === modal) closeVideo(); });
   </script>
 </body>
 </html>
