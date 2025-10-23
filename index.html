@@ -8,6 +8,8 @@
     :root{
       --bg:#f7f7f8; --fg:#0f172a; --muted:#64748b; --accent:#2563eb;
       --card:#ffffff; --border:rgba(2,6,23,.08); --shadow:0 10px 30px rgba(2,6,23,.08);
+      --offsetX:240px;   /* odległość lewego/prawego od środka */
+      --metaH:120px;     /* stała wysokość opisu, żeby wyśrodkowanie pionowe było stabilne */
     }
     *{box-sizing:border-box}
     body{margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--fg)}
@@ -16,12 +18,12 @@
     h1{font-size:clamp(22px,3.2vw,30px); margin:0 0 8px}
     p.lead{color:var(--muted); margin:0 0 20px}
 
-    /* === Scena: dokładnie 3 karty w podglądzie (lewa/aktywna/prawa) === */
-    .stage{position:relative; height: 560px; display:flex; align-items:center; justify-content:center; overflow:hidden}
+    /* === Scena: 3 karty w podglądzie, brak ucinania === */
+    .stage{position:relative; min-height: calc(404px + var(--metaH) + 140px); padding:80px 0 60px; display:flex; align-items:center; justify-content:center; overflow:visible}
     .track{position:relative; width:100%; height:100%}
 
     .video-card{ 
-      position:absolute; top:50%; left:50%; translate:-50% -50%; 
+      position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
       width:404px; background:var(--card); border-radius:16px; overflow:hidden; border:1px solid var(--border);
       box-shadow:var(--shadow);
       transition: transform .45s cubic-bezier(.2,.7,.2,1), opacity .3s ease, filter .3s ease;
@@ -29,22 +31,20 @@
     }
 
     .thumb{position:relative; width:404px; height:404px; background:#eee; cursor:pointer}
-    .thumb img{width:404px; height:404px; object-fit:cover; display:block}
+    .thumb img{width:404px; height:404px; object-fit:cover; display:block; -webkit-user-drag:none; user-select:none}
 
     .play-icon{ position:absolute; top:50%; left:50%; width:100px; height:100px; translate:-50% -50%; opacity:.9; transition:transform .2s ease, opacity .2s ease; pointer-events:none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.25)); }
     .thumb:hover .play-icon{ transform:scale(1.06); opacity:1 }
 
-    .meta{padding:12px 14px 16px}
-    .title{font-size:16px; font-weight:700; line-height:1.35; margin:0 0 6px}
-    .desc{font-size:14px; color:var(--muted); line-height:1.5; margin:0}
+    .meta{padding:12px 14px 16px; height:var(--metaH); display:flex; flex-direction:column; justify-content:flex-start}
+    .title{font-size:16px; font-weight:700; line-height:1.35; margin:0 0 6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+    .desc{font-size:14px; color:var(--muted); line-height:1.5; margin:0; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
+    .video-card.left .meta, .video-card.right .meta{display:none}
 
-    /* Pozycje: center/left/right */
+    /* Stabilne pozycje: center/left/right – tylko przesunięcie w poziomie, delikatna skala */
     .video-card.center{ transform: translate(-50%, -50%) scale(1); z-index:40; }
-    .video-card.left{ transform: translate(calc(-50% - 220px), -50%) scale(.96); opacity:.98; filter:saturate(.95); z-index:30 }
-    .video-card.right{ transform: translate(calc(-50% + 220px), -50%) scale(.96); opacity:.98; filter:saturate(.95); z-index:30 }
-
-    /* Delikatne zajrzenie dalszych slajdów (opcjonalnie można ukryć) */
-    .peek-hints{position:absolute; inset:0; pointer-events:none}
+    .video-card.left{ transform: translate(calc(-50% - var(--offsetX)), -50%) scale(.96); opacity:.98; filter:saturate(.95); z-index:30 }
+    .video-card.right{ transform: translate(calc(-50% + var(--offsetX)), -50%) scale(.96); opacity:.98; filter:saturate(.95); z-index:30 }
 
     /* Przyciski nawigacji */
     .nav{ position:absolute; inset:0; pointer-events:none }
@@ -53,7 +53,7 @@
     .nav .prev{ left:8px }
     .nav .next{ right:8px }
 
-    @media (max-width: 500px){ .stage{height:520px} }
+    @media (max-width: 500px){ .stage{min-height:560px; padding:60px 0 40px} }
   </style>
 </head>
 <body>
