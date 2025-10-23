@@ -1,119 +1,171 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8">
-  <title>Lightbox z YouTube</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lightbox + 3‑up Video Carousel (jasny)</title>
   <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+    :root{
+      --bg:#f7f7f8; --fg:#0f172a; --muted:#64748b; --accent:#2563eb;
+      --card:#ffffff; --border:rgba(2,6,23,.08); --shadow:0 10px 30px rgba(2,6,23,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--fg)}
+
+    .wrap{max-width:1200px; margin:40px auto; padding:0 24px}
+    h1{font-size:clamp(22px,3.2vw,30px); margin:0 0 8px}
+    p.lead{color:var(--muted); margin:0 0 20px}
+
+    /* === Scena: dokładnie 3 karty w podglądzie (lewa/aktywna/prawa) === */
+    .stage{position:relative; height: 560px; display:flex; align-items:center; justify-content:center; overflow:hidden}
+    .track{position:relative; width:100%; height:100%}
+
+    .video-card{ 
+      position:absolute; top:50%; left:50%; translate:-50% -50%; 
+      width:404px; background:var(--card); border-radius:16px; overflow:hidden; border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      transition: transform .45s cubic-bezier(.2,.7,.2,1), opacity .3s ease, filter .3s ease;
+      will-change: transform, opacity, filter;
     }
 
-    /* Kontener miniatury z ikoną play */
-    .video-thumb {
-      position: relative;
-      width: 404px;
-      height: 404px;
-      background: url('https://raw.githubusercontent.com/W0jt3kk/eBOK-YT-lightbox/refs/heads/main/miniaturka1.png') center/cover;
-      border-radius: 0;
-      cursor: pointer;
-      overflow: hidden;
-    }
+    .thumb{position:relative; width:404px; height:404px; background:#eee; cursor:pointer}
+    .thumb img{width:404px; height:404px; object-fit:cover; display:block}
 
-    /* Ikona play na środku */
-    .play-icon {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 100px;
-      height: 100px;
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 0.8;
-      transition: transform 0.25s ease, opacity 0.25s ease;
-      pointer-events: none; /* żeby kliknięcie działało na całym obszarze */
-    }
+    .play-icon{ position:absolute; top:50%; left:50%; width:100px; height:100px; translate:-50% -50%; opacity:.9; transition:transform .2s ease, opacity .2s ease; pointer-events:none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.25)); }
+    .thumb:hover .play-icon{ transform:scale(1.06); opacity:1 }
 
-    .video-thumb:hover .play-icon {
-      transform: translate(-50%, -50%) scale(1.15);
-      opacity: 1;
-    }
+    .meta{padding:12px 14px 16px}
+    .title{font-size:16px; font-weight:700; line-height:1.35; margin:0 0 6px}
+    .desc{font-size:14px; color:var(--muted); line-height:1.5; margin:0}
 
-    /* Lightbox */
-    .lightbox {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      justify-content: center;
-      align-items: center;
-      z-index: 999;
-    }
+    /* Pozycje: center/left/right */
+    .video-card.center{ transform: translate(-50%, -50%) scale(1); z-index:40; }
+    .video-card.left{ transform: translate(calc(-50% - 220px), -50%) scale(.96); opacity:.98; filter:saturate(.95); z-index:30 }
+    .video-card.right{ transform: translate(calc(-50% + 220px), -50%) scale(.96); opacity:.98; filter:saturate(.95); z-index:30 }
 
-    .lightbox iframe {
-      width: 80%;
-      max-width: 800px;
-      aspect-ratio: 16 / 9;
-      border: none;
-      border-radius: 10px;
-    }
+    /* Delikatne zajrzenie dalszych slajdów (opcjonalnie można ukryć) */
+    .peek-hints{position:absolute; inset:0; pointer-events:none}
 
-    .close-btn {
-      position: absolute;
-      top: 20px;
-      right: 30px;
-      font-size: 32px;
-      color: white;
-      cursor: pointer;
-    }
+    /* Przyciski nawigacji */
+    .nav{ position:absolute; inset:0; pointer-events:none }
+    .nav button{ pointer-events:auto; position:absolute; top:50%; translate:0 -50%; width:48px; height:48px; border-radius:999px; border:1px solid var(--border); background:#ffffffee; color:var(--fg); display:grid; place-items:center; cursor:pointer; font-size:22px; transition: background .15s ease, box-shadow .15s ease; user-select:none; box-shadow:0 6px 18px rgba(2,6,23,.06) }
+    .nav button:hover{ background:#fff; box-shadow:0 8px 22px rgba(2,6,23,.1) }
+    .nav .prev{ left:8px }
+    .nav .next{ right:8px }
+
+    @media (max-width: 500px){ .stage{height:520px} }
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <h1>Karuzela wideo (3 podglądy: lewy/aktywny/prawy)</h1>
+    <p class="lead">Środkowy to aktualnie wybrany. Z lewej – poprzedni, z prawej – następny. Klik w boczny przesuwa karuzelę tak, by stał się aktywny. Przewijanie: [<] [>], kółko myszy, strzałki.</p>
 
-  <!-- Miniatura z ikonką -->
-  <div class="video-thumb" id="openVideo">
-    <img class="play-icon" src='https://raw.githubusercontent.com/W0jt3kk/eBOK-YT-lightbox/refs/heads/main/play1.png' alt="Play">
+    <div class="stage">
+      <div class="track" id="track"></div>
+      <div class="nav" aria-hidden="false">
+        <button class="prev" id="prevBtn" aria-label="Poprzedni">&#x2039;</button>
+        <button class="next" id="nextBtn" aria-label="Następny">&#x203A;</button>
+      </div>
+    </div>
   </div>
 
-  <!-- Lightbox z playerem -->
-  <div class="lightbox" id="videoModal">
-    <div class="close-btn" id="closeVideo">&times;</div>
-    <iframe id="youtubeFrame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <!-- Lightbox -->
+  <div class="lightbox" id="videoModal" role="dialog" aria-modal="true" aria-label="Odtwarzacz wideo" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.75); position:fixed; inset:0; padding:20px; z-index:100;">
+    <div class="close-btn" id="closeVideo" title="Zamknij" style="position:fixed; top:18px; right:22px; width:42px; height:42px; border-radius:999px; display:grid; place-items:center; font-size:28px; color:#fff; cursor:pointer; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.25)">&times;</div>
+    <div class="sheet" style="width:min(100%, 980px); aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.2);">
+      <iframe id="youtubeFrame" src="" allow="autoplay; encrypted-media" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" style="width:100%; height:100%; border:0"></iframe>
+    </div>
   </div>
 
   <script>
-    const openBtn = document.getElementById('openVideo');
-    const modal = document.getElementById('videoModal');
-    const closeBtn = document.getElementById('closeVideo');
-    const frame = document.getElementById('youtubeFrame');
+    // === DANE (Twoje miniatury + teksty) ===
+    // Każdy obiekt: id (YouTube), title, desc, thumb (404x404)
+    const videos = [
+      { id: "MDM2ehPasko", title: "mBOK PGNiG – intro i główne funkcje", desc: "Krótka prezentacja najważniejszych ekranów aplikacji.", thumb: "https://raw.githubusercontent.com/W0jt3kk/eBOK-YT-lightbox/refs/heads/main/miniaturka1.png" },
+      { id: "dQw4w9WgXcQ", title: "Case study: wdrożenie FSC w ubezpieczeniach", desc: "Proces sprzedaży, 360° klienta i integracje.", thumb: "https://placehold.co/404x404/png?text=Twoja+miniatura+2" },
+      { id: "9bZkp7q19f0", title: "Data Cloud – szybki przegląd", desc: "Źródła danych, segmentacja, aktywacje i insighty.", thumb: "https://placehold.co/404x404/png?text=Twoja+miniatura+3" },
+      { id: "3JZ_D3ELwOQ", title: "Agentforce demo", desc: "Obsługa zgłoszeń, automatyzacje i KPI.", thumb: "https://placehold.co/404x404/png?text=Twoja+miniatura+4" }
+    ];
 
-    const videoId = "MDM2ehPasko"; // Twój film
+    const track = document.getElementById('track');
+    let active = 0; // indeks aktywnej karty
 
-    openBtn.addEventListener('click', () => {
+    function mod(n, m){ return ((n % m) + m) % m; }
+
+    function render(){
+      const left = mod(active - 1, videos.length);
+      const right = mod(active + 1, videos.length);
+      const order = [left, active, right];
+
+      track.innerHTML = order.map((idx)=>{
+        const role = idx === active ? 'center' : (idx === left ? 'left' : 'right');
+        const v = videos[idx];
+        return `
+          <article class="video-card ${role}" data-index="${idx}">
+            <button class="thumb" data-vid="${v.id}" aria-label="Odtwórz: ${esc(v.title)}">
+              <img loading="lazy" src="${v.thumb}" alt="Miniatura: ${esc(v.title)}">
+              <img class="play-icon" src="https://upload.wikimedia.org/wikipedia/commons/7/75/Black_YouTube_play_button_icon.svg" alt="Play">
+            </button>
+            <div class="meta">
+              <h3 class="title">${v.title}</h3>
+              <p class="desc">${v.desc}</p>
+            </div>
+          </article>`
+      }).join('');
+    }
+
+    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;') }
+
+    function openVideo(id){
+      const modal = document.getElementById('videoModal');
+      const frame = document.getElementById('youtubeFrame');
       modal.style.display = 'flex';
-      frame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-    });
-
-    closeBtn.addEventListener('click', () => {
+      frame.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+    }
+    function closeVideo(){
+      const modal = document.getElementById('videoModal');
+      const frame = document.getElementById('youtubeFrame');
       modal.style.display = 'none';
-      frame.src = "";
+      frame.src = '';
+    }
+
+    render();
+
+    // Klik: jeśli klik w boczny – przesuń; jeśli klik w środkowy – odtwórz
+    track.addEventListener('click', (e)=>{
+      const card = e.target.closest('.video-card');
+      if(!card) return;
+      const idx = Number(card.dataset.index);
+      if(idx !== active){ active = idx; render(); return; }
+      const btn = e.target.closest('.thumb');
+      if(btn){ openVideo(btn.dataset.vid); }
     });
 
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        modal.style.display = 'none';
-        frame.src = "";
-      }
+    // Nawigacja [<] [>]
+    document.getElementById('prevBtn').addEventListener('click', ()=>{ active = mod(active - 1, videos.length); render(); });
+    document.getElementById('nextBtn').addEventListener('click', ()=>{ active = mod(active + 1, videos.length); render(); });
+
+    // Klawiatura
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === 'ArrowLeft'){ active = mod(active - 1, videos.length); render(); }
+      if(e.key === 'ArrowRight'){ active = mod(active + 1, videos.length); render(); }
+      if(e.key === 'Escape'){ closeVideo(); }
     });
+
+    // Kółko myszy (throttle)
+    let wheelLock = false;
+    window.addEventListener('wheel', (e)=>{
+      if(wheelLock) return; wheelLock = true;
+      if((e.deltaY > 0) || (e.deltaX > 0)){ active = mod(active + 1, videos.length); }
+      else { active = mod(active - 1, videos.length); }
+      render();
+      setTimeout(()=> wheelLock = false, 280);
+    }, {passive:true});
+
+    // Lightbox close
+    document.getElementById('closeVideo').addEventListener('click', closeVideo);
+    document.getElementById('videoModal').addEventListener('click', (e)=>{ if(e.target.id === 'videoModal') closeVideo(); });
   </script>
-
 </body>
 </html>
