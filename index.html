@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lightbox + 3‑up Video Carousel (jasny)</title>
+  <title>Lightbox + 2‑up Video Carousel (jasny, 8 filmów)</title>
   <style>
     :root{
       --bg:#f7f7f8; --fg:#0f172a; --muted:#64748b; --accent:#2563eb;
-      --card:#ffffff; --border:rgba(2,6,23,.08); --shadow:0 10px 30px rgba(2,6,23,.08);
-      --offsetX:240px;   /* odległość lewego/prawego od środka */
-      --metaH:120px;     /* stała wysokość opisu, żeby wyśrodkowanie pionowe było stabilne */
+      --card:#ffffff; --shadow:0 10px 30px rgba(2,6,23,.08);
+      --gap:24px;        /* odstęp między dwoma aktywnymi */
+      --offsetX:240px;   /* podgląd bocznych od pary aktywnej */
+      --metaH:120px;     /* stała wysokość opisu */
+      --w:404px;         /* szerokość/ wysokość miniatury */
     }
     *{box-sizing:border-box}
     body{margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--fg)}
@@ -18,49 +20,50 @@
     h1{font-size:clamp(22px,3.2vw,30px); margin:0 0 8px}
     p.lead{color:var(--muted); margin:0 0 20px}
 
-    /* === Scena: 3 karty w podglądzie, brak ucinania === */
-    .stage{position:relative; min-height: calc(404px + var(--metaH) + 140px); padding:80px 0 60px; display:flex; align-items:center; justify-content:center; overflow:visible}
+    /* Scena */
+    .stage{position:relative; min-height: calc(var(--w) + var(--metaH) + 160px); padding:80px 0 60px; display:flex; align-items:center; justify-content:center; overflow:visible}
     .track{position:relative; width:100%; height:100%}
 
     .video-card{ 
       position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
-      width:404px; background:var(--card); border-radius:16px; overflow:hidden; /* border usunięty */
-      box-shadow:var(--shadow);
+      width:var(--w); background:var(--card); border-radius:16px; overflow:hidden; box-shadow:var(--shadow);
       transition: transform .45s cubic-bezier(.2,.7,.2,1), opacity .3s ease, filter .3s ease;
       will-change: transform, opacity, filter;
     }
 
-    .thumb{position:relative; width:404px; height:404px; background:#eee; cursor:pointer}
-    .thumb .poster{width:404px; height:404px; object-fit:cover; display:block; -webkit-user-drag:none; user-select:none}
+    .thumb{position:relative; width:var(--w); height:var(--w); background:#eee; cursor:pointer; border:none; outline:none; box-shadow:none}
+    .thumb .poster{width:var(--w); height:var(--w); object-fit:cover; display:block; -webkit-user-drag:none; user-select:none; border:none}
 
-    /* Play icon – dokładnie z Twojego pliku, stały rozmiar */
-    .play-icon{ position:absolute; top:50%; left:50%; width:120px; height:120px; transform:translate(-50%, -50%); opacity:.95; transition:transform .2s ease, opacity .2s ease; pointer-events:none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.25)); }
+    .play-icon{ position:absolute; top:50%; left:50%; width:120px; height:120px; transform:translate(-50%, -50%); opacity:.95; transition:transform .2s ease, opacity .2s ease; pointer-events:none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.25)); border:none }
     .thumb:hover .play-icon{ transform:translate(-50%, -50%) scale(1.06); opacity:1 }
 
     .meta{padding:12px 14px 16px; height:var(--metaH); display:flex; flex-direction:column; justify-content:flex-start}
     .title{font-size:16px; font-weight:700; line-height:1.35; margin:0 0 6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
     .desc{font-size:14px; color:var(--muted); line-height:1.5; margin:0; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
+
+    :root{ --half: calc(var(--w) / 2); --pairHalf: calc(var(--half) + var(--gap)/2); }
+
+    .video-card.left  { transform: translate(calc(-50% - var(--pairHalf) - var(--offsetX)), -50%) scale(.96); opacity:.98; filter:saturate(.95); z-index:30 }
+    .video-card.center0{ transform: translate(calc(-50% - var(--pairHalf)), -50%) scale(1); z-index:40 }
+    .video-card.center1{ transform: translate(calc(-50% + var(--pairHalf)), -50%) scale(1); z-index:40 }
+    .video-card.right { transform: translate(calc(-50% + var(--pairHalf) + var(--offsetX)), -50%) scale(.96); opacity:.98; filter:saturate(.95); z-index:30 }
+
     .video-card.left .meta, .video-card.right .meta{display:none}
 
-    /* Stabilne pozycje: center/left/right – tylko przesunięcie w poziomie, delikatna skala */
-    .video-card.center{ transform: translate(-50%, -50%) scale(1); z-index:40; }
-    .video-card.left{ transform: translate(calc(-50% - var(--offsetX)), -50%) scale(.96); opacity:.98; filter:saturate(.95); z-index:30 }
-    .video-card.right{ transform: translate(calc(-50% + var(--offsetX)), -50%) scale(.96); opacity:.98; filter:saturate(.95); z-index:30 }
-
-    /* Przyciski nawigacji */
     .nav{ position:absolute; inset:0; pointer-events:none }
-    .nav button{ pointer-events:auto; position:absolute; top:50%; translate:0 -50%; width:48px; height:48px; border-radius:999px; border:1px solid var(--border); background:#ffffffee; color:var(--fg); display:grid; place-items:center; cursor:pointer; font-size:22px; transition: background .15s ease, box-shadow .15s ease; user-select:none; box-shadow:0 6px 18px rgba(2,6,23,.06) }
+    .nav button{ pointer-events:auto; position:absolute; top:50%; translate:0 -50%; width:48px; height:48px; border-radius:999px; border:none; background:#ffffffee; color:var(--fg); display:grid; place-items:center; cursor:pointer; font-size:22px; transition: background .15s ease, box-shadow .15s ease; user-select:none; box-shadow:0 6px 18px rgba(2,6,23,.06) }
     .nav button:hover{ background:#fff; box-shadow:0 8px 22px rgba(2,6,23,.1) }
     .nav .prev{ left:8px }
     .nav .next{ right:8px }
 
-    @media (max-width: 500px){ .stage{min-height:560px; padding:60px 0 40px} }
+    @media (max-width: 900px){ :root{ --offsetX:180px } }
+    @media (max-width: 500px){ .stage{min-height:560px; padding:60px 0 40px}; :root{ --gap:16px; --offsetX:140px } }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Karuzela wideo (3 podglądy: lewy/aktywny/prawy)</h1>
-    <p class="lead">Środkowy to aktualnie wybrany. Z lewej – poprzedni, z prawej – następny. Klik w boczny przesuwa karuzelę tak, by stał się aktywny. Przewijanie: [<] [>], kółko myszy, strzałki.</p>
+    <h1>Karuzela wideo (2 aktywne + podglądy po bokach)</h1>
+    <p class="lead">Pokazówka z 8 filmami – na środku są zawsze dwa filmy obok siebie, po bokach podglądy kolejnych. Klik w boczny przesuwa karuzelę. Obsługuje też [<] [>], strzałki i kółko myszy.</p>
 
     <div class="stage">
       <div class="track" id="track"></div>
@@ -71,7 +74,6 @@
     </div>
   </div>
 
-  <!-- Lightbox -->
   <div class="lightbox" id="videoModal" role="dialog" aria-modal="true" aria-label="Odtwarzacz wideo" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.75); position:fixed; inset:0; padding:20px; z-index:100;">
     <div class="close-btn" id="closeVideo" title="Zamknij" style="position:fixed; top:18px; right:22px; width:42px; height:42px; border-radius:999px; display:grid; place-items:center; font-size:28px; color:#fff; cursor:pointer; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.25)">&times;</div>
     <div class="sheet" style="width:min(100%, 980px); aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.2);">
@@ -80,30 +82,36 @@
   </div>
 
   <script>
-    // === DANE (Twoje miniatury + teksty) ===
-    // Każdy obiekt: id (YouTube), title, desc, thumb (404x404)
     const videos = [
       { id: "MDM2ehPasko", title: "mBOK PGNiG – intro i główne funkcje", desc: "Krótka prezentacja najważniejszych ekranów aplikacji.", thumb: "https://raw.githubusercontent.com/W0jt3kk/eBOK-YT-lightbox/refs/heads/main/miniaturka1.png" },
-      { id: "dQw4w9WgXcQ", title: "Case study: wdrożenie FSC w ubezpieczeniach", desc: "Proces sprzedaży, 360° klienta i integracje.", thumb: "https://placehold.co/404x404/png?text=Twoja+miniatura+2" },
-      { id: "9bZkp7q19f0", title: "Data Cloud – szybki przegląd", desc: "Źródła danych, segmentacja, aktywacje i insighty.", thumb: "https://placehold.co/404x404/png?text=Twoja+miniatura+3" },
-      { id: "3JZ_D3ELwOQ", title: "Agentforce demo", desc: "Obsługa zgłoszeń, automatyzacje i KPI.", thumb: "https://placehold.co/404x404/png?text=Twoja+miniatura+4" }
+      { id: "dQw4w9WgXcQ", title: "Case study: wdrożenie FSC w ubezpieczeniach", desc: "Proces sprzedaży, 360° klienta i integracje.", thumb: "https://placehold.co/404x404/png?text=Miniatura+2" },
+      { id: "9bZkp7q19f0", title: "Data Cloud – szybki przegląd", desc: "Źródła danych, segmentacja, aktywacje i insighty.", thumb: "https://placehold.co/404x404/png?text=Miniatura+3" },
+      { id: "3JZ_D3ELwOQ", title: "Agentforce demo", desc: "Obsługa zgłoszeń, automatyzacje i KPI.", thumb: "https://placehold.co/404x404/png?text=Miniatura+4" },
+      { id: "eY52Zsg-KVI", title: "Einstein i automatyzacje", desc: "Skrócony pokaz działania narzędzi AI.", thumb: "https://placehold.co/404x404/png?text=Miniatura+5" },
+      { id: "aqz-KE-bpKQ", title: "Service Cloud Voice", desc: "Demo rozmowy klienta i agenta z AI.", thumb: "https://placehold.co/404x404/png?text=Miniatura+6" },
+      { id: "hY7m5jjJ9mM", title: "Marketing Cloud – kampania journey", desc: "Automatyzacja e‑maili, segmenty i raporty.", thumb: "https://placehold.co/404x404/png?text=Miniatura+7" },
+      { id: "oHg5SJYRHA0", title: "Insurance Claims Portal", desc: "Szybkie zgłoszenie szkody i workflow.", thumb: "https://placehold.co/404x404/png?text=Miniatura+8" }
     ];
 
     const track = document.getElementById('track');
-    let active = 0; // indeks aktywnej karty
+    let active = 0;
 
     function mod(n, m){ return ((n % m) + m) % m; }
 
     function render(){
-      const left = mod(active - 1, videos.length);
-      const right = mod(active + 1, videos.length);
-      const order = [left, active, right];
+      const left  = mod(active - 1, videos.length);
+      const c0    = mod(active, videos.length);
+      const c1    = mod(active + 1, videos.length);
+      const right = mod(active + 2, videos.length);
 
-      track.innerHTML = order.map((idx)=>{
-        const role = idx === active ? 'center' : (idx === left ? 'left' : 'right');
+      const order = [left, c0, c1, right];
+      const role  = ["left","center0","center1","right"];
+
+      track.innerHTML = order.map((idx, i)=>{
+        const r = role[i];
         const v = videos[idx];
         return `
-          <article class="video-card ${role}" data-index="${idx}">
+          <article class="video-card ${r}" data-index="${idx}">
             <button class="thumb" data-vid="${v.id}" aria-label="Odtwórz: ${esc(v.title)}">
               <img class="poster" loading="lazy" src="${v.thumb}" alt="Miniatura: ${esc(v.title)}">
               <img class="play-icon" src="https://raw.githubusercontent.com/W0jt3kk/eBOK-YT-lightbox/refs/heads/main/play1.png" alt="Play">
@@ -133,38 +141,42 @@
 
     render();
 
-    // Klik: jeśli klik w boczny – przesuń; jeśli klik w środkowy – odtwórz
     track.addEventListener('click', (e)=>{
       const card = e.target.closest('.video-card');
       if(!card) return;
       const idx = Number(card.dataset.index);
-      if(idx !== active){ active = idx; render(); return; }
-      const btn = e.target.closest('.thumb');
-      if(btn){ openVideo(btn.dataset.vid); }
+      const c0 = mod(active, videos.length);
+      const c1 = mod(active+1, videos.length);
+      if(idx === c0 || idx === c1){
+        const btn = e.target.closest('.thumb');
+        if(btn){ openVideo(btn.dataset.vid); }
+      }else{
+        const left  = mod(active - 1, videos.length);
+        const right = mod(active + 2, videos.length);
+        if(idx === left){ active = mod(active - 1, videos.length); }
+        else if(idx === right){ active = mod(active + 1, videos.length); }
+        render();
+      }
     });
 
-    // Nawigacja [<] [>]
     document.getElementById('prevBtn').addEventListener('click', ()=>{ active = mod(active - 1, videos.length); render(); });
     document.getElementById('nextBtn').addEventListener('click', ()=>{ active = mod(active + 1, videos.length); render(); });
 
-    // Klawiatura
     window.addEventListener('keydown', (e)=>{
       if(e.key === 'ArrowLeft'){ active = mod(active - 1, videos.length); render(); }
       if(e.key === 'ArrowRight'){ active = mod(active + 1, videos.length); render(); }
       if(e.key === 'Escape'){ closeVideo(); }
     });
 
-    // Kółko myszy (throttle)
     let wheelLock = false;
     window.addEventListener('wheel', (e)=>{
       if(wheelLock) return; wheelLock = true;
       if((e.deltaY > 0) || (e.deltaX > 0)){ active = mod(active + 1, videos.length); }
       else { active = mod(active - 1, videos.length); }
       render();
-      setTimeout(()=> wheelLock = false, 280);
+      setTimeout(()=> wheelLock = false, 260);
     }, {passive:true});
 
-    // Lightbox close
     document.getElementById('closeVideo').addEventListener('click', closeVideo);
     document.getElementById('videoModal').addEventListener('click', (e)=>{ if(e.target.id === 'videoModal') closeVideo(); });
   </script>
