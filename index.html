@@ -17,16 +17,17 @@
     *{box-sizing:border-box}
     body{margin:0; font-family:Arial, sans-serif; background:var(--bg); color:var(--fg)}
 
-    .bar{width:1270px; margin:24px auto;}
+    .bar{width:1270px; margin:0 auto;}
     .bar img{display:block; width:100%; height:auto}
 
-    .carousel-wrap{width:1140px; margin:32px auto; position:relative; text-align:center}
+    .carousel-wrap{width:1140px; margin:32px auto; position:relative; text-align:left}
     .carousel-wrap h2{
       font-family:Arial, sans-serif;
       font-weight:400;
       color:var(--titleColor);
       font-size:28px;
       margin:0 0 24px;
+      text-align:left;
     }
 
     .stage{position:relative; min-height: calc(var(--w) + var(--metaH) + 160px); padding:40px 0 60px; display:flex; align-items:center; justify-content:center; overflow:visible}
@@ -64,7 +65,6 @@
     .nav button:hover{ background:#fff; box-shadow:0 8px 22px rgba(2,6,23,.1) }
     .nav .prev{ left:-4px }
     .nav .next{ right:-4px }
-
   </style>
 </head>
 <body>
@@ -86,5 +86,102 @@
   <footer class="bar bar--bottom">
     <img src="https://raw.githubusercontent.com/W0jt3kk/eBOK-YT-lightbox/refs/heads/main/dolna_belka.png" alt="Dolna belka (projekt)">
   </footer>
+
+  <script>
+    const videos = [
+      { id: "MDM2ehPasko", title: "mBOK PGNiG – intro i główne funkcje", desc: "Krótka prezentacja najważniejszych ekranów aplikacji.", thumb: "https://raw.githubusercontent.com/W0jt3kk/eBOK-YT-lightbox/refs/heads/main/miniaturka1.png" },
+      { id: "dQw4w9WgXcQ", title: "Case study: wdrożenie FSC w ubezpieczeniach", desc: "Proces sprzedaży, 360° klienta i integracje.", thumb: "https://placehold.co/404x404/png?text=Miniatura+2" },
+      { id: "9bZkp7q19f0", title: "Data Cloud – szybki przegląd", desc: "Źródła danych, segmentacja, aktywacje i insighty.", thumb: "https://placehold.co/404x404/png?text=Miniatura+3" },
+      { id: "3JZ_D3ELwOQ", title: "Agentforce demo", desc: "Obsługa zgłoszeń, automatyzacje i KPI.", thumb: "https://placehold.co/404x404/png?text=Miniatura+4" },
+      { id: "eY52Zsg-KVI", title: "Einstein i automatyzacje", desc: "Skrócony pokaz działania narzędzi AI.", thumb: "https://placehold.co/404x404/png?text=Miniatura+5" },
+      { id: "aqz-KE-bpKQ", title: "Service Cloud Voice", desc: "Demo rozmowy klienta i agenta z AI.", thumb: "https://placehold.co/404x404/png?text=Miniatura+6" },
+      { id: "hY7m5jjJ9mM", title: "Marketing Cloud – kampania journey", desc: "Automatyzacja e-maili, segmenty i raporty.", thumb: "https://placehold.co/404x404/png?text=Miniatura+7" },
+      { id: "oHg5SJYRHA0", title: "Insurance Claims Portal", desc: "Szybkie zgłoszenie szkody i workflow.", thumb: "https://placehold.co/404x404/png?text=Miniatura+8" }
+    ];
+
+    const track = document.getElementById('track');
+    let active = 0;
+
+    function mod(n, m){ return ((n % m) + m) % m; }
+
+    function render(){
+      const left  = mod(active - 1, videos.length);
+      const c0    = mod(active, videos.length);
+      const c1    = mod(active + 1, videos.length);
+      const right = mod(active + 2, videos.length);
+
+      const order = [left, c0, c1, right];
+      const role  = ["left","center0","center1","right"];
+
+      track.innerHTML = order.map((idx, i)=>{
+        const r = role[i];
+        const v = videos[idx];
+        return `
+          <article class="video-card ${r}" data-index="${idx}">
+            <button class="thumb" data-vid="${v.id}" aria-label="Odtwórz: ${esc(v.title)}">
+              <img class="poster" loading="lazy" src="${v.thumb}" alt="Miniatura: ${esc(v.title)}">
+              <img class="play-icon" src="https://raw.githubusercontent.com/W0jt3kk/eBOK-YT-lightbox/refs/heads/main/play1.png" alt="Play">
+            </button>
+            <div class="meta">
+              <h3 class="title">${v.title}</h3>
+              <p class="desc">${v.desc}</p>
+            </div>
+          </article>`
+      }).join('');
+    }
+
+    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\"/g,'&quot;') }
+
+    function openVideo(id){
+      const modal = document.getElementById('videoModal');
+      const frame = document.getElementById('youtubeFrame');
+      modal.style.display = 'flex';
+      frame.src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+    }
+    function closeVideo(){
+      const modal = document.getElementById('videoModal');
+      const frame = document.getElementById('youtubeFrame');
+      modal.style.display = 'none';
+      frame.src = '';
+    }
+
+    render();
+
+    track.addEventListener('click', (e)=>{
+      const card = e.target.closest('.video-card');
+      if(!card) return;
+      const idx = Number(card.dataset.index);
+      const c0 = mod(active, videos.length);
+      const c1 = mod(active+1, videos.length);
+      if(idx === c0 || idx === c1){
+        const btn = e.target.closest('.thumb');
+        if(btn){ openVideo(btn.dataset.vid); }
+      }else{
+        const left  = mod(active - 1, videos.length);
+        const right = mod(active + 2, videos.length);
+        if(idx === left){ active = mod(active - 1, videos.length); }
+        else if(idx === right){ active = mod(active + 1, videos.length); }
+        render();
+      }
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', ()=>{ active = mod(active - 1, videos.length); render(); });
+    document.getElementById('nextBtn').addEventListener('click', ()=>{ active = mod(active + 1, videos.length); render(); });
+
+    window.addEventListener('keydown', (e)=>{
+      if(e.key === 'ArrowLeft'){ active = mod(active - 1, videos.length); render(); }
+      if(e.key === 'ArrowRight'){ active = mod(active + 1, videos.length); render(); }
+      if(e.key === 'Escape'){ closeVideo(); }
+    });
+
+    let wheelLock = false;
+    window.addEventListener('wheel', (e)=>{
+      if(wheelLock) return; wheelLock = true;
+      if((e.deltaY > 0) || (e.deltaX > 0)){ active = mod(active + 1, videos.length); }
+      else { active = mod(active - 1, videos.length); }
+      render();
+      setTimeout(()=> wheelLock = false, 260);
+    }, {passive:true});
+  </script>
 </body>
 </html>
