@@ -6,22 +6,27 @@
   <title>Lightbox + 2‑up Video Carousel (jasny, 8 filmów)</title>
   <style>
     :root{
-      --bg:#f7f7f8; --fg:#0f172a; --muted:#64748b; --accent:#2563eb;
+      --bg:#ffffff; --fg:#0f172a; --muted:#64748b; --accent:#2563eb;
       --card:#ffffff; --shadow:0 10px 30px rgba(2,6,23,.08);
-      --gap:10px;        /* odstęp między dwoma aktywnymi (zmniejszony) */
-      --offsetX:240px;   /* podgląd bocznych od pary aktywnej */
+      --gap:10px;        /* odstęp między dwoma aktywnymi */
+      --offsetX:160px;   /* podgląd bocznych od pary aktywnej (dostosowane do 1140px) */
       --metaH:120px;     /* stała wysokość opisu */
       --w:404px;         /* szerokość/ wysokość miniatury */
     }
     *{box-sizing:border-box}
     body{margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif; background:var(--bg); color:var(--fg)}
 
-    .wrap{max-width:1200px; margin:40px auto; padding:0 24px}
-    h1{font-size:clamp(22px,3.2vw,30px); margin:0 0 8px}
-    p.lead{color:var(--muted); margin:0 0 20px}
+    /* Sekcje belki */
+    .bar{width:1270px; margin:24px auto;}
+    .bar img{display:block; width:100%; height:auto}
+
+    /* Sekcja karuzeli w kontenerze 1140px */
+    .carousel-wrap{width:1140px; margin:32px auto; position:relative}
+    /* lokalne nadpisania zmiennych – tu możesz dalej modyfikować */
+    .carousel-wrap{ --gap:10px; --offsetX:160px; --w:404px; }
 
     /* Scena */
-    .stage{position:relative; min-height: calc(var(--w) + var(--metaH) + 160px); padding:80px 0 60px; display:flex; align-items:center; justify-content:center; overflow:visible}
+    .stage{position:relative; min-height: calc(var(--w) + var(--metaH) + 160px); padding:60px 0 60px; display:flex; align-items:center; justify-content:center; overflow:visible}
     .track{position:relative; width:100%; height:100%}
 
     .video-card{ 
@@ -54,20 +59,22 @@
     .video-card.left .meta, .video-card.right .meta{display:none}
 
     .nav{ position:absolute; inset:0; pointer-events:none; z-index:99 }
-    .nav button{ pointer-events:auto; position:absolute; top:50%; translate:0 -50%; width:48px; height:48px; border-radius:999px; border:none; background:#ffffffee; color:var(--fg); display:grid; place-items:center; cursor:pointer; font-size:22px; transition: background .15s ease, box-shadow .15s ease; user-select:none; box-shadow:0 6px 18px rgba(2,6,23,.06) }
+    .nav button{ pointer-events:auto; position:absolute; top:50%; translate:0 -50%; width:48px; height:48px; border-radius:999px; border:none; background:#ffffff; color:var(--fg); display:grid; place-items:center; cursor:pointer; font-size:22px; transition: background .15s ease, box-shadow .15s ease; user-select:none; box-shadow:0 6px 18px rgba(2,6,23,.06) }
     .nav button:hover{ background:#fff; box-shadow:0 8px 22px rgba(2,6,23,.1) }
-    .nav .prev{ left:8px }
-    .nav .next{ right:8px }
+    .nav .prev{ left:-4px }
+    .nav .next{ right:-4px }
 
-    @media (max-width: 900px){ :root{ --offsetX:180px } }
-    @media (max-width: 500px){ .stage{min-height:560px; padding:60px 0 40px}; :root{ --gap:8px; --offsetX:140px } }
+    @media (max-width: 900px){ .carousel-wrap{width:100%} .nav .prev{left:8px} .nav .next{right:8px} }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Karuzela wideo (2 aktywne + podglądy po bokach)</h1>
-    <p class="lead">Pokazówka z 8 filmami – na środku są zawsze dwa filmy obok siebie, po bokach podglądy kolejnych. Klik w boczny przesuwa karuzelę. Obsługuje też [<] [>], strzałki i kółko myszy.</p>
+  <!-- GÓRNA BELKA (1270 px, wyśrodkowana) -->
+  <header class="bar bar--top">
+    <img src="https://raw.githubusercontent.com/W0jt3kk/eBOK-YT-lightbox/refs/heads/main/gorna_belka.png" alt="Górna belka (projekt)">
+  </header>
 
+  <!-- KARUZELA (w kontenerze 1140 px) -->
+  <main class="carousel-wrap">
     <div class="stage">
       <div class="track" id="track"></div>
       <div class="nav" aria-hidden="false">
@@ -75,8 +82,14 @@
         <button class="next" id="nextBtn" aria-label="Następny">&#x203A;</button>
       </div>
     </div>
-  </div>
+  </main>
 
+  <!-- DOLNA BELKA (1270 px, wyśrodkowana) -->
+  <footer class="bar bar--bottom">
+    <img src="https://raw.githubusercontent.com/W0jt3kk/eBOK-YT-lightbox/refs/heads/main/dolna_belka.png" alt="Dolna belka (projekt)">
+  </footer>
+
+  <!-- Lightbox -->
   <div class="lightbox" id="videoModal" role="dialog" aria-modal="true" aria-label="Odtwarzacz wideo" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.75); position:fixed; inset:0; padding:20px; z-index:100;">
     <div class="close-btn" id="closeVideo" title="Zamknij" style="position:fixed; top:18px; right:22px; width:42px; height:42px; border-radius:999px; display:grid; place-items:center; font-size:28px; color:#fff; cursor:pointer; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.25)">&times;</div>
     <div class="sheet" style="width:min(100%, 980px); aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.2);">
@@ -127,7 +140,7 @@
       }).join('');
     }
 
-    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;') }
+    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\"/g,'&quot;') }
 
     function openVideo(id){
       const modal = document.getElementById('videoModal');
