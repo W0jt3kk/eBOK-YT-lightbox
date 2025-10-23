@@ -20,17 +20,18 @@
     .bar{width:1270px; margin:0 auto;}
     .bar img{display:block; width:100%; height:auto}
 
-    .carousel-wrap{width:1140px; margin:32px auto; position:relative; text-align:left}
+    .carousel-wrap{width:1140px; margin:8px auto; position:relative; text-align:left}
     .carousel-wrap h2{
       font-family:Arial, sans-serif;
       font-weight:400;
       color:var(--titleColor);
       font-size:28px;
-      margin:0 0 24px;
+      margin:0 0 8px;
       text-align:left;
     }
 
-    .stage{position:relative; min-height: calc(var(--w) + var(--metaH) + 160px); padding:0; display:flex; align-items:center; justify-content:center; overflow:visible}
+    .stage{position:relative; min-height: calc(var(--w) + var(--metaH) + 40px); padding:0; display:flex; align-items:center; justify-content:center; overflow:visible}
+    .track{position:relative; width:100%; height:100%}
     .track{position:relative; width:100%; height:100%}
 
     .video-card{ 
@@ -82,6 +83,14 @@
       </div>
     </div>
   </main>
+
+  <!-- Lightbox (przywrócony) -->
+  <div class="lightbox" id="videoModal" role="dialog" aria-modal="true" aria-label="Odtwarzacz wideo" style="display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.75); position:fixed; inset:0; padding:20px; z-index:100;">
+    <div class="close-btn" id="closeVideo" title="Zamknij" style="position:fixed; top:18px; right:22px; width:42px; height:42px; border-radius:999px; display:grid; place-items:center; font-size:28px; color:#fff; cursor:pointer; background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.25)">&times;</div>
+    <div class="sheet" style="width:min(100%, 980px); aspect-ratio:16/9; background:#000; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.2);">
+      <iframe id="youtubeFrame" src="" allow="autoplay; encrypted-media" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" style="width:100%; height:100%; border:0"></iframe>
+    </div>
+  </div>
 
   <footer class="bar bar--bottom">
     <img src="https://raw.githubusercontent.com/W0jt3kk/eBOK-YT-lightbox/refs/heads/main/dolna_belka.png" alt="Dolna belka (projekt)">
